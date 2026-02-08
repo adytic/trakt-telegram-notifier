@@ -1,285 +1,236 @@
-# Trakt to Telegram Notifier
+# Trakt to Telegram Notifier 🎬→📱
 
-Cloudflare Worker yang mengirim notifikasi ke Telegram secara otomatis saat Anda selesai menonton film/show di Trakt.
+Automatic Telegram notifications when you watch movies/shows on Trakt.tv
 
 ## ✨ Features
 
-- ✅ **Auto-notification** setiap 2 menit via cron trigger
-- ✅ **Dual message format** - text message + poster dengan detail lengkap
-- ✅ **Multiple ratings** - Trakt, TMDB, dan IMDb
-- ✅ **Timezone WIB** - konversi otomatis dari UTC
-- ✅ **No duplicates** - tracking via Cloudflare KV
-- ✅ **Serverless** - gratis di Cloudflare Workers free tier
+- **Dual Message Format**: Separate text message + poster image with details
+- **Rich Information**: TMDB posters, ratings, genres, runtime, overview
+- **Smart Tracking**: JSON file-based tracking prevents duplicate notifications
+- **Hybrid Deployment**: Works on both GitHub Actions (free) and VPS
+- **Timezone Support**: Auto-converts to WIB (UTC+7)
+- **Python**: Simple, reliable, easy to modify
 
-## 📋 Prerequisites
+---
 
-Sebelum setup, Anda perlu:
+## 🚀 Quick Start
 
-1. **Akun Cloudflare** (gratis) - [signup di sini](https://dash.cloudflare.com/sign-up)
-2. **Node.js & npm** - [download di sini](https://nodejs.org/)
-3. **Trakt API credentials**
-4. **TMDB API key**
-5. **Telegram bot**
+### Option 1: GitHub Actions (Free, Recommended)
 
-## 🔑 Setup Credentials
+**Perfect for personal use dengan delay 5-15 menit acceptable**
+
+1. **Fork/Clone repository ini**
+2. **Add GitHub Secrets** (Settings → Secrets and variables → Actions):
+
+   ```
+   TRAKT_CLIENT_ID=your_client_id
+   TRAKT_USERNAME=your_trakt_username
+   TMDB_API_KEY=your_tmdb_key
+   TELEGRAM_BOT_TOKEN=your_bot_token
+   TELEGRAM_CHAT_ID=your_chat_id
+   TELEGRAM_USERNAME=your_telegram_username
+   TELEGRAM_USER_DISPLAY=your_display_name
+   ```
+
+3. **Enable GitHub Actions**:
+   - Go to Actions tab
+   - Enable workflows
+   - Manually trigger first run untuk testing
+
+4. **Done!** Script akan jalan otomatis setiap 5 menit.
+
+---
+
+### Option 2: VPS Deployment (Real-time)
+
+**Perfect untuk near real-time notifications (setiap 2 menit)**
+
+#### Setup di VPS:
+
+```bash
+# Clone repository
+cd /root
+git clone https://github.com/YOUR_USERNAME/trakt-telegram-notifier.git
+cd trakt-telegram-notifier
+
+# Install dependencies
+pip3 install -r requirements.txt
+
+# Create .env file
+nano .env
+```
+
+**Paste credentials** ke `.env`:
+
+```env
+TRAKT_CLIENT_ID=your_client_id
+TRAKT_USERNAME=your_trakt_username
+TMDB_API_KEY=your_tmdb_key
+TELEGRAM_BOT_TOKEN=your_bot_token
+TELEGRAM_CHAT_ID=your_chat_id
+TELEGRAM_USERNAME=your_telegram_username
+TELEGRAM_USER_DISPLAY=ɑ𝐝𝐢𝐭𝐲𝕏 🜲
+```
+
+#### Setup Cron Job:
+
+```bash
+# Edit crontab
+crontab -e
+
+# Add this line (runs every 2 minutes)
+*/2 * * * * cd /root/trakt-telegram-notifier && /usr/bin/python3 trakt_notifier.py >> /var/log/trakt-notifier.log 2>&1
+```
+
+**Test manual:**
+
+```bash
+python3 trakt_notifier.py
+```
+
+---
+
+## 📋 Credentials Setup
 
 ### 1. Trakt API
 
-1. Login ke [trakt.tv](https://trakt.tv)
-2. Buka https://trakt.tv/oauth/applications/new
-3. Isi form:
-   - **Name**: Trakt Telegram Notifier
-   - **Redirect URI**: `urn:ietf:wg:oauth:2.0:oob`
-4. Simpan **Client ID** dan **Client Secret**
-
-**Get Access Token:**
-
-```bash
-# Buka URL ini di browser (ganti YOUR_CLIENT_ID):
-https://trakt.tv/oauth/authorize?response_type=code&client_id=YOUR_CLIENT_ID&redirect_uri=urn:ietf:wg:oauth:2.0:oob
-
-# Copy authorization code yang muncul
-# Lalu run curl ini (ganti CLIENT_ID, CLIENT_SECRET, dan CODE):
-curl -X POST https://api.trakt.tv/oauth/token \
-  -H "Content-Type: application/json" \
-  -d '{
-    "code": "YOUR_CODE",
-    "client_id": "YOUR_CLIENT_ID",
-    "client_secret": "YOUR_CLIENT_SECRET",
-    "redirect_uri": "urn:ietf:wg:oauth:2.0:oob",
-    "grant_type": "authorization_code"
-  }'
-
-# Response akan berisi access_token dan refresh_token - simpan keduanya!
-```
+1. Go to https://trakt.tv/oauth/applications
+2. Create new application:
+   - **Name**: Telegram Notifier
+   - **Redirect URI**: `https://zapp.com` (or any URL)
+3. Copy **Client ID**
+4. Your **Username**: Check your profile URL (`trakt.tv/users/USERNAME`)
 
 ### 2. TMDB API
 
-1. Buat akun di [themoviedb.org](https://www.themoviedb.org/signup)
-2. Login, lalu ke https://www.themoviedb.org/settings/api
-3. Request API key (pilih "Developer")
-4. Isi form sederhana
-5. Copy **API Key (v3 auth)**
+1. Sign up di https://www.themoviedb.org
+2. Go to Settings → API
+3. Request API key (Developer, free)
+4. Copy **API Key (v3 auth)**
 
 ### 3. Telegram Bot
 
-1. Buka Telegram, search **@BotFather**
-2. Send command: `/newbot`
-3. Ikuti instruksi, beri nama bot Anda
-4. Copy **Bot Token** yang diberikan
+1. Chat dengan [@BotFather](https://t.me/BotFather)
+2. Send `/newbot` dan ikuti instruksi
+3. Copy **Bot Token**
+4. Chat dengan [@userinfobot](https://t.me/userinfobot)
+5. Copy **Chat ID** (untuk personal chat, atau group ID untuk group)
 
-**Get Chat ID:**
+---
 
-1. Search **@userinfobot** di Telegram
-2. Click Start
-3. Copy **ID** Anda (angka panjang)
+## 🎯 How It Works
 
-## 📦 Installation
+1. **Every 5 minutes** (GitHub Actions) or **every 2 minutes** (VPS)
+2. Fetch latest 5 watch history items dari Trakt
+3. Check `watched.json` untuk prevent duplicates
+4. Get movie/show details dari TMDB (poster, rating, genres, etc.)
+5. Send dual notification ke Telegram:
+   - **Message 1**: User info + title + watch time
+   - **Message 2**: Poster image + ratings + overview + genres
+6. Update `watched.json` dengan item ID yang sudah dinotifikasi
+
+---
+
+## 📁 Project Structure
+
+```
+trakt-telegram-notifier/
+├── trakt_notifier.py          # Main Python script
+├── requirements.txt           # Python dependencies
+├── watched.json              # Tracking file (auto-generated)
+├── .env                      # Local credentials (gitignored)
+├── .github/
+│   └── workflows/
+│       └── trakt-notifier.yml # GitHub Actions workflow
+└── README.md
+```
+
+---
+
+## 🔧 Configuration
+
+### Schedule Interval
+
+**GitHub Actions** (`.github/workflows/trakt-notifier.yml`):
+
+```yaml
+schedule:
+  - cron: "*/5 * * * *" # Every 5 minutes
+```
+
+**VPS crontab**:
 
 ```bash
-# Clone atau download proyek ini
-cd d:\git\trakt-telegram-notifier
-
-# Install dependencies
-npm install
+*/2 * * * *  # Every 2 minutes (recommended)
+*/5 * * * *  # Every 5 minutes
+*/10 * * * * # Every 10 minutes
 ```
 
-## ⚙️ Configuration
+### History Limit
 
-### 1. Setup KV Namespace
+Edit `trakt_notifier.py` line ~240:
 
-```bash
-# Login ke Cloudflare
-npx wrangler login
-
-# Buat KV namespace
-npx wrangler kv:namespace create WATCHED_TRACKER
-
-# Copy KV ID yang muncul, lalu edit wrangler.toml:
-# Ganti YOUR_KV_NAMESPACE_ID dengan ID yang baru dibuat
+```python
+history = get_trakt_history(client_id, username, limit=5)  # Change 5 to your preference
 ```
 
-### 2. Setup Secrets
-
-```bash
-# Set secrets via Wrangler CLI:
-npx wrangler secret put TRAKT_CLIENT_ID
-# Paste value, tekan Enter
-
-npx wrangler secret put TRAKT_CLIENT_SECRET
-npx wrangler secret put TRAKT_ACCESS_TOKEN
-npx wrangler secret put TRAKT_REFRESH_TOKEN
-npx wrangler secret put TMDB_API_KEY
-npx wrangler secret put TELEGRAM_BOT_TOKEN
-npx wrangler secret put TELEGRAM_CHAT_ID
-```
-
-**Atau set via Cloudflare Dashboard:**
-
-1. Buka https://dash.cloudflare.com
-2. Pilih Workers & Pages → Your Worker → Settings → Variables
-3. Add environment variables:
-   - `TRAKT_CLIENT_ID`
-   - `TRAKT_CLIENT_SECRET`
-   - `TRAKT_ACCESS_TOKEN`
-   - `TRAKT_REFRESH_TOKEN`
-   - `TMDB_API_KEY`
-   - `TELEGRAM_BOT_TOKEN`
-   - `TELEGRAM_CHAT_ID`
-
-### 3. Customize User Display (Optional)
-
-Edit `wrangler.toml`:
-
-```toml
-[vars]
-TELEGRAM_USERNAME = "username_anda"
-TELEGRAM_USER_DISPLAY = "Nama Display Anda"
-```
-
-## 🚀 Deployment
-
-### Deploy ke Cloudflare
-
-```bash
-# Deploy ke production
-npx wrangler deploy
-```
-
-Worker akan otomatis berjalan setiap 2 menit!
-
-### Test Manual
-
-```bash
-# Test di local
-npx wrangler dev
-
-# Di terminal lain, trigger manual:
-curl http://localhost:8787/check
-```
-
-Atau setelah deploy, trigger via URL:
-
-```bash
-curl https://trakt-telegram-notifier.YOUR_SUBDOMAIN.workers.dev/check
-```
-
-## 🎨 Caption Format
-
-**Message 1:**
-
-```
-👤 ɑ𝐝𝐢𝐭𝐲𝕏 🜲 (https://t.me/ZYGYU) Just Watched Altered
-Released: 2025
-Watched: 26-11-2025 10:35 WIB
-```
-
-**Message 2 (dengan poster):**
-
-```
-⭐ 6.9/10 (27 votes)
-🕕 1h 25m
-
-In an alternate present, genetically enhanced humans dominate society...
-
-Genres Science Fiction, Action
-
-Ratings
-▫️ Trakt  5.2/10
-▫️ TMDB   6.9/10
-▫️ IMDb   N/A/10
-```
-
-## 🔧 Customization
-
-### Ubah Interval Cron
-
-Edit `wrangler.toml`:
-
-```toml
-[triggers]
-crons = ["*/1 * * * *"]  # Setiap 1 menit
-# atau
-crons = ["*/5 * * * *"]  # Setiap 5 menit
-```
-
-**Note:** Cloudflare free tier support cron minimum 1 menit.
-
-### Add IMDb Ratings
-
-Untuk mendapatkan IMDb ratings, Anda bisa integrate dengan [OMDb API](http://www.omdbapi.com/) (gratis 1000 requests/hari):
-
-1. Get API key dari OMDb
-2. Edit `src/index.js`, tambahkan fetch ke OMDb API
-3. Pass `imdbRating` ke `sendDualNotification()`
-
-## 📊 Monitoring
-
-### View Logs
-
-```bash
-# Stream logs real-time
-npx wrangler tail
-```
-
-### Check KV Storage
-
-```bash
-# List semua keys
-npx wrangler kv:key list --binding=WATCHED_TRACKER
-
-# Get specific key value
-npx wrangler kv:key get "notified:12345" --binding=WATCHED_TRACKER
-```
+---
 
 ## 🐛 Troubleshooting
 
-### Notifikasi tidak masuk
+### No notifications received
 
-1. **Check cron trigger di Cloudflare Dashboard:**
-   - Workers & Pages → Your Worker → Triggers → Cron Triggers
-   - Pastikan cron sudah terdaftar
+1. **Check credentials**: Ensure all environment variables set correctly
+2. **Check Trakt username**: Must be your public username, not "me"
+3. **Test manually**: Run `python3 trakt_notifier.py` locally
+4. **Check logs**:
+   - GitHub Actions: Actions tab → workflow runs
+   - VPS: `tail -f /var/log/trakt-notifier.log`
 
-2. **Check logs:**
+### "Trakt API error: 401"
 
-   ```bash
-   npx wrangler tail
-   ```
+- Wrong Client ID or username private. Make sure your Trakt profile is public.
 
-3. **Test manual:**
-   ```bash
-   curl https://your-worker.workers.dev/check
-   ```
+### "Telegram error"
 
-### Poster tidak muncul
+- Wrong Bot Token or Chat ID. Test dengan send manual message:
+  ```bash
+  curl -X POST "https://api.telegram.org/botYOUR_TOKEN/sendMessage" \
+    -d "chat_id=YOUR_CHAT_ID&text=Test"
+  ```
 
-- TMDB API key invalid atau quota habis
-- Poster path kosong (film lama mungkin tidak punya poster)
-- Check logs untuk error dari TMDB
-
-### Duplicate notifications
-
-- KV namespace ID salah di `wrangler.toml`
-- KV binding name tidak match (harus `WATCHED_TRACKER`)
+---
 
 ## 📝 Notes
 
-- **Free tier limits:**
-  - Cloudflare Workers: 100,000 requests/hari
-  - TMDB API: Tidak ada hard limit, tapi jangan abuse
-  - Telegram Bot: 30 messages/detik
-- **Cron reliability:**
-  - Cloudflare cron sangat reliable (±1 detik)
-  - Tidak seperti GitHub Actions yang sering delay
+- **GitHub Actions delay**: GitHub cron schedules dapat delay 5-15 menit (gratis, acceptable)
+- **VPS advantage**: Near real-time (2 min interval), lebih reliable
+- **Hybrid mode**: Bisa run di both! VPS untuk real-time, GitHub sebagai backup
+- **Free tier**: Semua services (Trakt, TMDB, Telegram, GitHub Actions) gratis
 
-- **Privacy:**
-  - Semua credentials disimpan sebagai secrets di Cloudflare
-  - Tidak ada data yang tersimpan selain di KV (item IDs yang sudah dinotifikasi)
+---
 
-## 🤝 Contributing
+## 🎨 Customization
 
-Feel free to fork dan customize sesuai kebutuhan!
+Edit message format di `trakt_notifier.py`:
 
-## 📄 License
+- `format_first_message()` - Text message format
+- `format_second_caption()` - Photo caption format
+
+---
+
+## 📜 License
 
 MIT
+
+---
+
+## 🙏 Credits
+
+- [Trakt.tv](https://trakt.tv) - Watch tracking
+- [TMDB](https://www.themoviedb.org) - Movie database
+- [Telegram](https://telegram.org) - Notifications
+
+---
+
+**Enjoy your automated Trakt notifications! 🎉**

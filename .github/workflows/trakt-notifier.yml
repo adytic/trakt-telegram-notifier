@@ -1,4 +1,4 @@
-name: Trakt to Telegram Notifier
+name: Trakt to Telegram Notifier (Python)
 
 on:
   schedule:
@@ -18,27 +18,24 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          node-version: "20"
+          python-version: "3.11"
 
       - name: Install dependencies
-        run: npm install
+        run: pip install -r requirements.txt
 
       - name: Run Trakt notifier
         env:
           TRAKT_CLIENT_ID: ${{ secrets.TRAKT_CLIENT_ID }}
-          TRAKT_CLIENT_SECRET: ${{ secrets.TRAKT_CLIENT_SECRET }}
-          TRAKT_ACCESS_TOKEN: ${{ secrets.TRAKT_ACCESS_TOKEN }}
-          TRAKT_REFRESH_TOKEN: ${{ secrets.TRAKT_REFRESH_TOKEN }}
           TRAKT_USERNAME: ${{ secrets.TRAKT_USERNAME }}
           TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           TELEGRAM_USERNAME: ${{ secrets.TELEGRAM_USERNAME }}
           TELEGRAM_USER_DISPLAY: ${{ secrets.TELEGRAM_USER_DISPLAY }}
-        run: node index.js
+        run: python trakt_notifier.py
 
       - name: Commit tracking file
         run: |
