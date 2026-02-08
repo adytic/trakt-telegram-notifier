@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# Environment variables
+
+
+# Logs
+*.log
+.DS_Store
+
+# Cloudflare Workers (not used anymore)
+wrangler.toml
+.wrangler/
+dist/
+
+# Keep watched.json (tracked by Git Actions)
+# watched.json is now committed to repository
