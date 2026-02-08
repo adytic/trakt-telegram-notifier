@@ -8,10 +8,22 @@ node_modules/
 *.log
 .DS_Store
 
-# Cloudflare Workers (not used anymore)
+# Cloudflare Workers (legacy, not used)
 wrangler.toml
 .wrangler/
 dist/
 
-# Keep watched.json (tracked by Git Actions)
-# watched.json is now committed to repository
+# Keep watched.json (tracked by GitHub Actions)
+# watched.json is committed to repository
+
+# Node.js files (not needed for Python version)
+src/
+*.js
+package.json
+package-lock.json
+
+# Documentation files (keep local only)
+OMDB_API_SETUP.md
+REMOVE_ENV_FROM_GIT.md
+implementation_plan.md
+walkthrough.md
