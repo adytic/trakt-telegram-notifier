@@ -30,7 +30,10 @@ walkthrough.md
 
 # Local test files and scripts
 history.json
+episodes.json
 test_trakt_history.py
+test_trakt_episodes.py
+debug_notifier.py
 add-secrets.ps1
 add-secrets.sh
 __pycache__/
