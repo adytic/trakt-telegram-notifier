@@ -27,3 +27,10 @@ OMDB_API_SETUP.md
 REMOVE_ENV_FROM_GIT.md
 implementation_plan.md
 walkthrough.md
+
+# Local test files and scripts
+history.json
+test_trakt_history.py
+add-secrets.ps1
+add-secrets.sh
+__pycache__/

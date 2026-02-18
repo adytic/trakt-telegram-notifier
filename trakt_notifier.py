@@ -265,14 +265,20 @@ def main():
     tmdb_api_key = os.getenv('TMDB_API_KEY')
     omdb_api_key = os.getenv('OMDB_API_KEY')  # Optional for IMDb + Rotten Tomatoes
     telegram_bot_token = os.getenv('TELEGRAM_BOT_TOKEN')
-    telegram_chat_id = os.getenv('TELEGRAM_CHAT_ID')
+    telegram_chat_id_default = os.getenv('TELEGRAM_CHAT_ID')
+    telegram_chat_id_movies = os.getenv('TELEGRAM_CHAT_ID_MOVIES', telegram_chat_id_default)
+    telegram_chat_id_episodes = os.getenv('TELEGRAM_CHAT_ID_EPISODES', telegram_chat_id_default)
+    
     telegram_username = os.getenv('TELEGRAM_USERNAME', 'ZYGYU')
     telegram_user_display = os.getenv('TELEGRAM_USER_DISPLAY', 'ɑ𝐝𝐢𝐭𝐲𝕏 🜲')
     telegram_channel_name = os.getenv('TELEGRAM_CHANNEL_NAME', 'MOVIES history 🎬')
     
     # Validate
-    if not all([client_id, tmdb_api_key, telegram_bot_token, telegram_chat_id]):
-        raise Exception("Missing required environment variables")
+    if not all([client_id, tmdb_api_key, telegram_bot_token]):
+        raise Exception("Missing required environment variables (Client ID, TMDB Key, or Bot Token)")
+        
+    if not any([telegram_chat_id_default, telegram_chat_id_movies, telegram_chat_id_episodes]):
+        raise Exception("Missing Telegram Chat ID configuration")
     
     print(f"[INFO] Environment variables loaded")
     print(f"[INFO] Using Trakt username: {username}")
@@ -330,10 +336,25 @@ def main():
             if imdb_id and omdb_api_key:
                 imdb_rating, tomato_rating = get_omdb_ratings(imdb_id, omdb_api_key)
             
+            if imdb_id and omdb_api_key:
+                imdb_rating, tomato_rating = get_omdb_ratings(imdb_id, omdb_api_key)
+            
+            # Determine Target Chat ID
+            target_chat_id = telegram_chat_id_default
+            if item['type'] == 'movie':
+                target_chat_id = telegram_chat_id_movies
+            elif item['type'] == 'episode':
+                target_chat_id = telegram_chat_id_episodes
+                
+            if not target_chat_id:
+                print(f"[WARN] No Chat ID configured for type {item['type']}, skipping notification.")
+                mark_as_notified(item_id, item['watched_at']) # Mark as done to avoid clutter
+                continue
+
             # Send notification
             send_notification(
                 telegram_bot_token,
-                telegram_chat_id,
+                target_chat_id,
                 item,
                 telegram_user_display,
                 telegram_username,
@@ -343,7 +364,7 @@ def main():
                 tomato_rating
             )
             
-            print(f"[SUCCESS] ✅ Notification sent for: {title}")
+            print(f"[SUCCESS] ✅ Notification sent for: {title} (Type: {item['type']})")
             
             # Mark as notified
             mark_as_notified(item_id, item['watched_at'])
