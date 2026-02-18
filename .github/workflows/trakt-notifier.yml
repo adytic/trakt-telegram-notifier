@@ -22,8 +22,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-ve Frsion: "3.11"
-          
-          
+
       - name: Install dependencies
         run: pip install -r requirements.txt
 
@@ -34,6 +33,8 @@ jobs:
           TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_CHAT_ID_MOVIES: ${{ secrets.TELEGRAM_CHAT_ID_MOVIES }}
+          TELEGRAM_CHAT_ID_EPISODES: ${{ secrets.TELEGRAM_CHAT_ID_EPISODES }}
           TELEGRAM_USERNAME: ${{ secrets.TELEGRAM_USERNAME }}
           TELEGRAM_USER_DISPLAY: ${{ secrets.TELEGRAM_USER_DISPLAY }}
           OMDB_API_KEY: ${{ secrets.OMDB_API_KEY }}
