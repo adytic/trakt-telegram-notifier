@@ -73,10 +73,10 @@ def sync_to_simkl():
         "User-Agent": f"{APP_NAME}/{APP_VERSION}"
     }
 
-    # Mengirim (POST) ke SIMKL
+   # Mengirim (POST) ke SIMKL
     simkl_response = requests.post(SIMKL_API_URL, headers=headers, json=simkl_payload)
     
-    if simkl_response.status_code == 200:
+    if simkl_response.status_code in [200, 201]:
         print("\n✅ Berhasil sinkronisasi ke SIMKL!")
         print("Response SIMKL:", simkl_response.json())
     else:
